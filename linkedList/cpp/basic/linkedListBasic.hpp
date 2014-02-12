@@ -23,17 +23,23 @@
 #ifndef UTILITIES_LINKEDLIST_BASIC_HPP
 #define UTILITIES_LINKEDLIST_BASIC_HPP
 
-#include <cstdint>
+#include <cstdint> // guarded
 
 namespace utilities { namespace linkedList {
 
-
+/*****************************************************************************/
+/* Linked list node (holds a uint32_t and points to the next node)           */
+/*****************************************************************************/
 class Node32_t {
     public:
         uint32_t        data;
         Node32_t*       next;
 };
 
+
+/*****************************************************************************/
+/* Linked list head (points to the first and last nodes in the list)         */
+/*****************************************************************************/
 class Head32_t {
     public:
         Node32_t*       next;
@@ -41,9 +47,13 @@ class Head32_t {
 };
 
 
+/*****************************************************************************/
+/* Basic linked list class (holds a list of uint32_t's and related methods)  */
+/*****************************************************************************/
 class BasicLinkedList {
     private:
         Head32_t*       head;
+        uint32_t        length;
 
     public:
         // class constructor
@@ -52,9 +62,11 @@ class BasicLinkedList {
         // class destructor
         ~BasicLinkedList();
 
-        // append item to list
-        void append(const uint32_t& d);
+        // push item to list
+        void push(const uint32_t& d);
 
+        // pop item from list
+        uint32_t pop();
 };
 
 
