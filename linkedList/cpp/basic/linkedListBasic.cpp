@@ -35,6 +35,9 @@ BasicLinkedList::BasicLinkedList() {
     // point the head to NULL in both directions
     head->next = 0;
     head->last = 0;
+
+    // set the length of the list
+    length = 0;
 }
 
 // destruct a basic linked list
@@ -45,8 +48,8 @@ BasicLinkedList::~BasicLinkedList() {
     delete(head);
 }
 
-// append an item to a basic linked list
-void BasicLinkedList::append(const uint32_t& d) {
+// push an item to a basic linked list
+void BasicLinkedList::push(const uint32_t& d) {
     Node32_t*       newNode;
 
     // allocate a new node
@@ -67,6 +70,35 @@ void BasicLinkedList::append(const uint32_t& d) {
         head->last->next = newNode;
         head->last = newNode;
     }
+
+    // set the length of the list
+    length++;
+}
+
+// pop an item from a basic linked list (length > 0)
+uint32_t BasicLinkedList::pop() {
+    uint32_t        d;
+    Node32_t*       node;
+
+    // get the data from the lost item in the list
+    d = head->last->data;
+
+    // find the new last node
+    node = head->next;
+    if (length == 1) {
+        head->next = 0;
+        delete(head->last);
+        head->last = 0;
+    } else {
+        node = head->next;
+        while (node->next->next != 0) node = node->next;
+        delete(node->next);
+        head->last = node;
+        node->next = 0;
+    }
+
+    // set the length of the list
+    length--;
 }
 
 
