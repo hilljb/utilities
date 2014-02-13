@@ -23,7 +23,7 @@
 #ifndef UTILITIES_LINKEDLIST_BASIC_HPP
 #define UTILITIES_LINKEDLIST_BASIC_HPP
 
-#include <cstdint> // guarded
+#include <cstdint>
 
 namespace utilities { namespace linkedList {
 
@@ -63,7 +63,7 @@ class BasicLinkedList {
         ~BasicLinkedList();
 
         // push item to list
-        void push(const uint32_t& d);
+        void push(uint32_t d);
 
         // pop item from list
         uint32_t pop();
