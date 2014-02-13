@@ -49,7 +49,7 @@ BasicLinkedList::~BasicLinkedList() {
 }
 
 // push an item to a basic linked list
-void BasicLinkedList::push(const uint32_t& d) {
+void BasicLinkedList::push(uint32_t d) {
     Node32_t*       newNode;
 
     // allocate a new node
