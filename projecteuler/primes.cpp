@@ -5,20 +5,20 @@
 // primes.cpp - prime/factorization classes and member functions
 
 /********** LICENSED UNDER THE GPLv3 *****************************************/
-/*  This file is part of Jason B. Hill's Project Euler C++ Utilities.        */
+/* This file is part of Jason B. Hill's Project Euler C++ Utilities.         */
 /*                                                                           */
-/*  Foobar is free software: you can redistribute it and/or modify           */
-/*  it under the terms of the GNU General Public License as published by     */
-/*  the Free Software Foundation, either version 3 of the License, or        */
-/*  (at your option) any later version.                                      */
+/* Foobar is free software: you can redistribute it and/or modify            */
+/* it under the terms of the GNU General Public License as published by      */
+/* the Free Software Foundation, either version 3 of the License, or         */
+/* (at your option) any later version.                                       */
 /*                                                                           */
-/*  Foobar is distributed in the hope that it will be useful,                */
-/*  but WITHOUT ANY WARRANTY; without even the implied warranty of           */
-/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            */
-/*  GNU General Public License for more details.                             */
+/* Foobar is distributed in the hope that it will be useful,                 */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of            */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             */
+/* GNU General Public License for more details.                              */
 /*                                                                           */
-/*  You should have received a copy of the GNU General Public License        */
-/*  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.          */
+/* You should have received a copy of the GNU General Public License         */
+/* along with Foobar.  If not, see <http://www.gnu.org/licenses/>.           */
 /*****************************************************************************/
 
 #include <cstdlib>
@@ -33,13 +33,20 @@
 
 #include "primes.hpp"
 
-namespace PE { //------------------ Project Euler namespace -------------------
 
 /*****************************************************************************/
-/* Function to find the square root of a number (needed for sieves)          */
-/* Input: a uint64_t integer n                                               */
-/* Output: a uint64_t integer representing the floor of sqrt(n)              */
+/* Project Euler namespace                                                   */
+/* ------------------------------------------------------------------------- */
+/* This namespace is shared with other Project Euler utilities. Here, it     */
+/* contains the primes subnamespace, which is used mostly for factoring      */
+/* lists of integers and doing other tasks (e.g., perfect number testing).   */
 /*****************************************************************************/
+namespace PE {
+
+
+/* function to find the square root of an integer (needed for sieves) ------ */
+/* input: a uint64_t n                                                       */
+/* output: a uint64_t representing the floor of the square root of n         */
 uint64_t sqrt_uint64(uint64_t n) {
     uint8_t             shift = 1;
     uint64_t            res, s;
@@ -47,23 +54,38 @@ uint64_t sqrt_uint64(uint64_t n) {
     while ((1<<shift) < n) shift += 1;
     res = (1<<((shift>>1) + 1));
     while (1) {
-        s = (n/res + res)/2;
+        s = (n/res + res) >> 1;
         if (s >= res) return res;
         res = s;
     }
 }
 
 
-namespace primes { //-------------- primes namespace --------------------------
+/*****************************************************************************/
+/* primes namespace                                                          */
+/* ------------------------------------------------------------------------- */
+/* Contains Sieve class (uses a sieve to form a list of primes), needed in   */
+/* the Factors class (uses STL containers to record prime factors and the    */
+/* corresponding exponents for factored integers). The current design is     */
+/* primarily focused on factoring (large) lists of consecutive integers, as  */
+/* many of the Project Euler problems require this. There isn't currently a  */
+/* concentration on factoring of individual (random/large) integers, and     */
+/* thus there is no quadratic sieve or elliptic curve method here. Keep in   */
+/* mind that such methods are designed for solitary integers. Here, we're    */
+/* considering lists of integers, which are more efficiently factored with a */
+/* sieve. The only function here requiring much math is that which computes  */
+/* the sum of divisors of an integer from the known prime factors.           */
+/*****************************************************************************/
+namespace primes {
+
 
 /*****************************************************************************/
 /* Prime sieve class                                                         */
+/* ------------------------------------------------------------------------- */
 /* Constructs a prime sieve and determines all primes less than some limit   */
 /*****************************************************************************/
 
-/*****************************************************************************/
-/* class constructor                                                         */
-/*****************************************************************************/
+/* constructor ------------------------------------------------------------- */
 Sieve::Sieve(uint64_t m) {
     uint64_t    i,j,sqrt_limit;
 
@@ -93,22 +115,16 @@ Sieve::Sieve(uint64_t m) {
     initPrimesList();
 }
 
-/*****************************************************************************/
-/* class destructor                                                          */
-/*****************************************************************************/
+/* destructor -------------------------------------------------------------- */
 Sieve::~Sieve() {
     delete[] sieve;
     delete[] primes;
 }
 
-/*****************************************************************************/
-/* Function to determine if a given number n is prime                        */
-/*****************************************************************************/
+/* function to determine if an integer is prime ---------------------------- */
 bool Sieve::isPrime(uint64_t n) { return sieve[n]; }
 
-/*****************************************************************************/
-/* Function to create a list of primes from a sieve                          */
-/*****************************************************************************/
+/* procedure to form a list of primes - called at construction ------------- */
 void Sieve::initPrimesList() {
     uint64_t    i,j;
     // create a list of primes
@@ -125,21 +141,24 @@ void Sieve::initPrimesList() {
 
 /*****************************************************************************/
 /* Factors class                                                             */
+/* ------------------------------------------------------------------------- */
 /* Stores prime factor information for an integer                            */
 /*****************************************************************************/
-Factors::Factors(uint64_t m) {
+
+/* constructor ------------------------------------------------------------- */
+Factors::Factors() {
     // store the integer being factored
-    n = m;
+    n = 0;
     // create a set to hold primes that factor the integer
-    primes = new std::set<uint64_t>;
+    //primes = new std::set<uint64_t>;
     // create an unordered_map to hold exponent information for primes
-    exponents = new std::unordered_map<uint64_t,uint8_t>;
+    //exponents = new std::unordered_map<uint64_t,uint8_t>;
 }
 
-/*****************************************************************************/
-/* Calculate the prime/exponent data directly with a sieve                   */
-/* This can be replaced later by something complete/efficient                */
-/*****************************************************************************/
+/* destructor -------------------------------------------------------------- */
+Factors::~Factors() { }
+
+/* compute factor data directly by sieve (useful for a single integer) ----- */
 void Factors::computeBySieve() {
     
     // create a prime sieve
@@ -148,11 +167,11 @@ void Factors::computeBySieve() {
     // if n is prime
     if (S->isPrime(n)) {
         // add the prime and 1 to the set of prime divisors
-        primes->insert(1);
-        primes->insert(n);
+        primes.insert(1);
+        primes.insert(n);
         // add the exponents for each divisor
-        exponents->emplace(1,1);
-        exponents->emplace(n,1);
+        exponents.emplace(1,1);
+        exponents.emplace(n,1);
     } else { // if n is not prime
         uint64_t    temp_n = n;
         // here you should factor individual integers using a sieve
@@ -161,69 +180,56 @@ void Factors::computeBySieve() {
     delete(S);
 }
 
-/*****************************************************************************/
-/* Function to print the prime factorization of an integer                   */
-/*****************************************************************************/
-void Factors::print() {
-    // the first implementation won't use ordering
-    std::cout << n << " : ";
-    for (auto it = exponents->begin(); it != exponents->end(); ++it) {
-        if (it != exponents->begin()) std::cout << " * ";
-        std::cout << it->first << "^" << (int)it->second;
-    }
-    std::cout << std::endl;
+/* function to determine if a prime p divides the integer n ---------------- */
+bool Factors::divides(uint64_t p) {
+    return primes.find(p) != primes.end();
 }
 
+/* print the factorization of n -------------------------------------------- */
+void Factors::print() {
 
-
-
-
-
-
-
-
+    std::cout << "test output for factors" << std::endl;
+}
 
 
 /*****************************************************************************/
 /* FactorRange class                                                         */
-/* Uses a sieve to factor a range of integers between 1 and some integer m   */
+/* ------------------------------------------------------------------------- */
+/* Factors a range of integers between 1 and some limit n                    */
 /*****************************************************************************/
-FactorRange::FactorRange(uint64_t m) {
-    uint64_t    i,j,p;
-    uint8_t     k=2;
 
-    // create a sieve of primes
-    Sieve* S = new Sieve(m);
-    // create a factor record for all integers in range
-    factors = new std::unordered_map<uint64_t,uint16_t>[m];
+/* constructor ------------------------------------------------------------- */
+FactorRange::FactorRange(uint64_t n) {
+    uint64_t        i,j,p;
 
-    // for each prime in S.primes, add prime and exponents to factor records
-    for (i=0;i<S->numPrimes;i++) {
-        p = S->primes[i];
-        for (j=p;j<m;j+=p) {
-            // factors[j][p] = 1;
-            factors[j].emplace(p,k);
+    // set the upper limit of the factor range to n
+    limit = n;
+    // create a sieve of all primes up to and including limit
+    sieve = new Sieve(limit + 1);
+    // create a list of Factor class objects
+    factors = new Factors[limit+1];
+    // store integer values
+    for (i=1;i<=n;i++) factors[i].n = i;
+
+    // for each prime in S->primes, consider multiples
+    for (i=0;i<sieve->numPrimes;i++) {
+        p = sieve->primes[i];
+        j = p;
+        while (j <= limit) {
+            factors[p].primes.insert(p);
+            j += p;
         }
     }
-
-    //for (auto& x: factors[39])
-    //    std::cout << x.first << ": " << x.second << std::endl;
-
-    //for (auto it = factors[39].begin(); it != factors[6].end(); ++it) {
-    //    std::cout << it->first << ":" << sizeof(it->second) << std::endl;
-    //}
-
-    std::unordered_map<uint64_t,uint8_t> mymap;
-    mymap.emplace(2,1);
-    mymap.emplace(20,3);
-    mymap.emplace(200,34);
-
-    //for (auto it = mymap.begin(); it != mymap.end(); ++it) {
-    //    std::cout << it->first << ":" << (int)it->second << std::endl;
-    //    printf("%lld : %d\n", it->first, it->second);
-   // }
-
 }
+
+/* destructor -------------------------------------------------------------- */
+FactorRange::~FactorRange() {
+    delete sieve;
+    delete[] factors;
+}
+
+
+
 
 
 } // namespace primes
@@ -255,11 +261,13 @@ int main() {
     //std::cout << S.primes[0] << S.primes[1] << S.primes[2] << std::endl;
     //std::cout << S.primes[S.numPrimes-1] << std::endl;
 
-    //PE::primes::FactorRange F = PE::primes::FactorRange(100);
+    PE::primes::FactorRange* F = new PE::primes::FactorRange(5);
 
-    PE::primes::Factors G = PE::primes::Factors(29);
-    G.computeBySieve();
-    G.print();
+    for (uint64_t i=1;i<=5;i++) {
+        std::cout << F->factors[i].n << std::endl;
+    }
+
+    delete F;
 
     return 0;
 }
