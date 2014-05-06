@@ -1,36 +1,86 @@
 #!/usr/bin/python2
 
+#   pype: Python Utilities for Project Euler
+#   pype.primes - prime sieve / range factoring / sum of divisors
+#   Jason B. Hill (jason@jasonbhill.com) code.jasonbhill.com
+#   April 30, 2014
+
+#   This program is free software: you can redistribute it and/or modify it
+#   under the terms of the GNU Lesser General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or (at your
+#   option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but WITHOUT
+#   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+#   License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+__author__ = 'Jason B. Hill (jason@jasonbhill.com)'
+__copyright__ = 'Copyright (c) 2014'
+
 import time
+import math
 
 
+###############################################################################
+# Sieve class                                                                 #
+# --------------------------------------------------------------------------- #
+# Uses a sieve of Eratosthenes to form a list of all prime numbers below some #
+# limit. Requires the math.sqrt function.                                     #
+###############################################################################
 class Sieve:
     """
     Creates a prime sieve and forms all primes less than some limit.
     """
-    def __init__(self, limit, verbose=False):
+    def __init__(self, limit):
+        """
+        Initialize a Sieve class member.
+
+        INPUT:
+        'limit' - an integer greater than or equal to 1.
+        """
+        # minimal error checking
+        if not isinstance(limit, (int, long)):
+            raise TypeError('Sieve limit must be an integer greater than 0.')
+        if limit < 1:
+            raise ValueError('Sieve limit must be an integer greater than 0.')
+
+        # store the upper limit of the sieve
         self.limit = limit
-        self.primes = []
-        self.numPrimes = 0
-        if verbose:
-            print "forming sieve of size", self.limit
-            start = time.time()
-        self.sieve = [True] * self.limit
-        self.sieve[0], self.sieve[1] = False, False
-        for key,val in enumerate(self.sieve):
-            if val:
-                self.primes.append(key)
-                self.numPrimes += 1
-                for k in range(key*2,self.limit,key):
-                    self.sieve[k] = False
-        if verbose:
-            elapsed = time.time() - start
-            print "found %s primes in %s seconds" % (self.numPrimes, elapsed)
+
+        # form sieve
+        self.sieve = [1] * self.limit
+
+        # set values at indices 0 and 1 to 0 (0 and 1 are not prime)
+        self.sieve[0] = 0
+        if self.limit > 1:
+            self.sieve[1] = 0
+
+        # iterate up to square root of limit
+        for j in range(4, self.limit, 2):
+            self.sieve[j] = 0
+        lastPrime = 1 # provides a new sieving point for each prime
+        for key in range(3,int(math.sqrt(limit))+1,2):
+            # determine if 'key' is prime
+            if self.sieve[key]:
+                # make multiples of 'key' composite
+                for j in range(key*(lastPrime+2), self.limit, 2*key):
+                    self.sieve[j] = 0
+                lastPrime = key
+
+        # count number of primes in sieve
+        self.numPrimes = sum(self.sieve)
+
 
     def __repr__(self):
         """
         Machine representation of Sieve class object.
         """
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        return "%s(limit=%s)" % (self.__class__, self.limit)
+
 
     def __str__(self):
         """
@@ -38,129 +88,179 @@ class Sieve:
         """
         return "%s object with %s primes below %s" % (self.__class__, self.numPrimes, self.limit)
 
+
     def isPrime(self, n):
         """
         Returns True if n is prime and False otherwise.
         """
-        return self.sieve[n]
+        if self.sieve[n]: return True
+        return False
 
 
-class Factors:
+    def setPrimes(self):
+        """
+        Creates a set from the primes in self.sieve.
+        """
+        S = set()
+        for key,val in enumerate(self.sieve):
+            if val: S.add(key)
+        return S
+
+
+    def listPrimes(self):
+        """
+        Creates a list from the primes in self.sieve.
+        """
+        L = []
+        for key,val in enumerate(self.sieve):
+            if val: L.append(key)
+        return L
+
+
+
+###############################################################################
+# RangeFactor class                                                           #
+# --------------------------------------------------------------------------- #
+# Uses the Sieve class to factor a range of integers.                         #
+###############################################################################
+class RangeFactor:
     """
-    Stores prime and exponent information for an integer.
+    Uses a prime sieve to factor a range of integers. Provides prime factor
+    information plus single integer methods (sum of divisors, isPerfect) and
+    multiple integer methods (lcm, gcd, coprime).
     """
-    def __init__(self, n):
-        self.n = n
-        self.primes = set()
-        self.exponents = {}
+    def __init__(self, start, stop=None, verbose=False):
+        """
+        Initialize a RangeFactor class member. The input here is somewhat like
+        Python's built-in 'range' function, minus the step option. Factor info
+        will be generated for all integers n satisfying start <= n < stop.
 
-    def __repr__(self):
-        """
-        Machine representation of Factors class object.
-        """
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        Use the 'verbose=True' option to print progress report.
 
-    def __str__(self):
+        INPUT:
+        'start' - A positive integer. Defaults to zero.
+        'stop' - A positive integer > 'start'.
+        'verbose' - A Boolean value to trigger verbose output.
         """
-        String representation of Factors class object.
-        """
-        s = "%s :" % self.n
-        for p in sorted(self.exponents.keys()):
-            s += " %s^%s" % (p,self.exponents[p])
-        return s
-
-    def addPrime(self, p):
-        """
-        Include the prime p as a prime divisor or n.
-        """
-        self.primes.add(p)
-        e = 0
-        f = self.n
-        while f % p == 0:
-            e += 1
-            f /= p
-        self.exponents[p] = e
-
-    def isDivisible(self, p):
-        """
-        Returns true if n is divisible by p and returns false otherwise.
-        """
-        if p in self.primes:
-            return True
+        # parse input options
+        if not stop:
+            self.stop = start
+            self.start = 0
         else:
-            return False
+            self.start = start
+            self.stop = stop
 
-    def isPerfect(self):
-        """
-        Return true if n is a perfect number.
-        """
-        if self.sumDivisors() - self.n == self.n:
-            return True
-        else:
-            return False
+        # minimal error checking
+        if not isinstance(self.start, (int, long)):
+            raise TypeError('RangeFactor start must be an integer.')
+        if self.start < 0:
+            raise ValueError('RangeFactor start must be greater than or equal to zero.')
+        if not isinstance(self.stop, (int, long)):
+            raise TypeError('RangeFactor stop must be an integer.')
+        if self.stop < 0 or self.stop <= self.start:
+            raise ValueError('RangeFactor stop must be greater than start.')
 
-    def sumDivisors(self):
-        """
-        Returns the sum of the divisors of n.
+        # create the sieve
+        if verbose:
+            print __name__, ": creating sieve"
+            stopwatch = time.time()
+        self.sieve = Sieve(self.stop)
+        if verbose:
+            print __name__, ": sieve created in", time.time()-stopwatch, "seconds"
 
-        Example: n=28 returns 1+2+4+7+14+28=56.
-        """
-        s = 1
-        for p in self.primes:
-            s *= (p**(self.exponents[p]+1)-1)/(p-1)
-        return s
-
-    def initBySieve(self):
-        """
-        Use a (newly formed) sieve to factor n. Inefficient if used iteratively.
-        """
-        S = Sieve(self.n + 1)
-        for p in S.primes:
-            if self.n % p == 0:
-                self.addPrime(p)
-
-
-class FactorRange:
-    """
-    Factor a range of integers using a sieve. each factored integer is stored a
-    Factors class instance.
-    """
-    def __init__(self, n):
-        self.sieve = Sieve(n+1)
+        # create factor dictionaries for each integer in given range
+        if verbose:
+            print __name__, ": creating factor records"
+            stopwatch = time.time()
         self.factors = {}
-        for i in range(1,n+1,1):
-            self.factors[i] = Factors(i)
-        for p in self.sieve.primes:
-            for i in range(p,n+1,p):
-                self.factors[i].addPrime(p)
-    def __repr__(self):
+        for i in range(self.start, self.stop, 1):
+            self.factors[i] = {}
+        if verbose:
+            print __name__, ": factor records created in", time.time()-stopwatch, "seconds"
+            stopwatch = time.time()
+            print __name__, ": populating factor records"
+
+        # insert prime factor info for each integer in range
+        for p in self.sieve.listPrimes():
+            n = (self.start//p)*p
+            if n < self.start or n==0: n += p
+            while n < self.stop:
+                # include p in the factorization of n
+                m = n
+                e = 0
+                while m % p == 0:
+                    e += 1
+                    m /= p
+                self.factors[n][p] = e
+                n += p
+        if verbose:
+            print __name__, ": factor records filled in", time.time()-stopwatch, "seconds"
+
+
+    def sumDivisors(self, n):
         """
-        Machine representation of FactorRange class object.
+        Return the sum of the divisors of n, including 1 and n. To return the
+        sum of the proper divisors, use self.sumProperDivisors(n).
         """
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        if n < self.start or n >= self.stop:
+            raise ValueError('sumDivisors argument must be in proper range')
+        m = 1
+        for p in self.factors[n].keys():
+            m *= ((p**(self.factors[n][p]+1)-1)/(p-1))
+        return m
+
+
+    def sumProperDivisors(self, n):
+        """
+        Returns the sum of the proper divisors of n, including 1 but of course
+        not including n. To return the sum of all divisors, including n, use
+        self.sumDivisors(n).
+        """
+        return self.sumDivisors(n)-n
+
+
+    def isPerfect(self, n):
+        """
+        Returns True if n is a perfect number.
+
+        A perfect number is an integer n such that the sum of the proper
+        divisors of n is n. For example, 28 is a perfect number.
+        """
+        if self.sumDivisors(n)-n == n: return True
+        return False
+
+
+    def gcd(self, n, m):
+        """
+        Returns the greatest common divisor of n and m.
+        """
+        if min([m,n]) < self.start or max([m,n]) >= self.stop:
+            raise ValueError('greatest common divisor argument out of range')
+        P = set(self.factors[m].keys()).intersection(set(self.factors[n].keys()))
+        gcd = 1
+        for p in P:
+            gcd *= p**(min([self.factors[m][p], self.factors[n][p]]))
+        return gcd
+
+
+    def lcm(self, n, m):
+        """
+        Returns the least common multiple of n and m.
+        """
+        if min([m,n]) < self.start or max([m,n]) >= self.stop:
+            raise ValueError('least common multiple argument out of range')
+        return (n*m)/self.gcd(n,m)
+
+
+    def areCoprime(self, n, m):
+        """
+        Returns True if n and m are coprime and returns False otherwise.
+        """
+        if min([m,n]) < self.start or max([m,n]) >= self.stop:
+            raise ValueError('areCoprime argument out of range')
+        P = set(self.factors[m].keys()).intersection(set(self.factors[n].keys()))       
+        if len(P)==0: return True
+        return False
 
 
 
-def sumDivisors(n, sieve=None):
-    """
-    Factor n using a sieve and return the sum of its factors.
-    """
-    if not sieve:
-        sieve = Sieve(n+1)
-    f = Factors(n)
-    for p in sieve.primes:
-        if p <= n and n % p == 0:
-            f.addPrime(p)
-    return f.sumDivisors()
-
-
-def sumProperDivisors(n, sieve=None):
-    return sumDivisors(n, sieve) - n
-
-
-def isPerfect(n, sieve=None):
-    """
-    Return True if n is a perfect number.
-    """
-    if sumProperDivisors(n, sieve) == n: return True
-    return False
