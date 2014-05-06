@@ -3,7 +3,7 @@
 #   pype: Python Utilities for Project Euler
 #   pype.primes - prime sieve / range factoring / sum of divisors
 #   Jason B. Hill (jason@jasonbhill.com) code.jasonbhill.com
-#   April 30, 2014
+#   May 5, 2014
 
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU Lesser General Public License as published by
